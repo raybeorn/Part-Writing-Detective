@@ -4,7 +4,7 @@ Part-Writing Detective is a web app for practice in four-part (SATB) part-writin
 
 Each measure is a two-chord progression with one part-writing error. Select the rule that the measure breaks, then select **Check**. The app shows the correct rule, highlights the notes with the error, and gives an explanation.
 
-The app runs in the browser. It has no build step and no server code, so you can host it on GitHub Pages. 
+The app runs in the browser. It has no build step and no server code.
 
 ## Features
 
