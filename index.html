@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <!-- Scripts come only from this site and the pinned jsDelivr files. Audio samples come only from tonejs.github.io. -->
+  <!-- Tone.js needs blob: for its AudioWorklet. VexFlow needs 'unsafe-inline' for SVG style attributes. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net blob:; worker-src 'self' blob:; connect-src 'self' https://tonejs.github.io; media-src 'self' blob: https://tonejs.github.io; style-src 'self' 'unsafe-inline'; font-src 'self' data: https://cdn.jsdelivr.net; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'" />
+  <title>Part-Writing Detective</title>
+  <meta name="description" content="Practice spotting four-part (SATB) voice-leading errors. Every measure hides exactly one broken rule.">
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+
+  <!-- Installable web app (PWA), set up as in EarCraft. Android and Chrome use the manifest. iOS uses the apple-touch-icon and apple-mobile-web-app-* tags. -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#14151a" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="apple-touch-icon" sizes="167x167" href="apple-touch-icon-167x167.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="apple-touch-icon-152x152.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Part-Writing" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1><img class="logo" src="icon.svg" alt="" width="44" height="44" />Part-Writing Detective</h1>
+      <div class="subtitle">One part-writing error in every measure · find the rule it breaks</div>
+    </header>
+
+    <details class="card settings-card" open>
+      <summary class="settings-summary">Options</summary>
+      <div class="settings">
+        <div class="setting-group">
+          <label class="group-label">Measures</label>
+          <div class="chip-row" id="count">
+            <button type="button" class="chip selected" data-value="4">4</button>
+            <button type="button" class="chip" data-value="6">6</button>
+            <button type="button" class="chip" data-value="8">8</button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label class="group-label">Keys</label>
+          <div class="chip-row" id="mode">
+            <button type="button" class="chip selected" data-value="both">Major &amp; minor</button>
+            <button type="button" class="chip" data-value="major">Major</button>
+            <button type="button" class="chip" data-value="minor">Minor</button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label class="group-label">Show</label>
+          <div class="chip-row" id="show">
+            <button type="button" class="chip selected" data-value="rn">Roman numerals</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings" style="margin-top:18px">
+        <div class="setting-group">
+          <label class="group-label">Rules to practice <span id="rule-count"></span></label>
+          <div class="rule-chips" id="rule-chips"></div>
+          <div class="hint left" id="minor-only-hint"></div>
+        </div>
+      </div>
+    </details>
+
+    <div class="card">
+      <div class="stats-bar">
+        <div class="stat"><div class="num" id="st-correct">0</div><div class="lbl">First-try correct</div></div>
+        <div class="stat"><div class="num" id="st-total">0</div><div class="lbl">Measures</div></div>
+        <div class="stat"><div class="num acc" id="st-acc">---</div><div class="lbl">Accuracy</div></div>
+        <div class="stat"><div class="num streak" id="st-streak">0</div><div class="lbl">Streak</div></div>
+      </div>
+      <div class="play-area">
+        <div class="play-controls">
+          <button class="btn btn-primary btn-big" id="new" type="button">New exercise</button>
+          <button class="btn btn-secondary" id="play-all" type="button">▶ Play all</button>
+          <button class="btn btn-secondary" id="check-all" type="button">Check all</button>
+        </div>
+        <div class="hint" id="progress"></div>
+      </div>
+    </div>
+
+    <div id="audio-loader" class="loader hidden">Loading piano samples… (first time only)</div>
+
+    <section id="measures" class="measures" aria-label="Measures"></section>
+
+    <details class="card settings-card">
+      <summary class="settings-summary">Rule reference</summary>
+      <div id="rule-list"></div>
+    </details>
+
+    <details class="card settings-card">
+      <summary class="settings-summary">Your progress by rule</summary>
+      <table class="rule-stats">
+        <thead><tr><th>Rule</th><th>First-try correct</th><th></th></tr></thead>
+        <tbody id="rule-stats"></tbody>
+      </table>
+      <button id="reset-stats" class="btn btn-secondary btn-small" type="button">Reset progress</button>
+    </details>
+
+    <footer class="app-footer">
+      Piano samples:
+      <a href="https://archive.org/details/SalamanderGrandPianoV3" target="_blank" rel="noopener noreferrer">Salamander Grand Piano</a>
+      by Alexander Holm, licensed
+      <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener noreferrer">CC BY 3.0</a>.
+    </footer>
+  </div>
+
+  <!-- Same pinned versions and SRI (SHA-384) hashes as EarCraft. If you change a version, make a new hash, or the browser blocks the script. -->
+  <!-- Command: curl -sL <script-url> | openssl dgst -sha384 -binary | openssl base64 -A -->
+  <!-- Add the prefix "sha384-" to the output and put it in the integrity attribute. -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/tone@15.1.22/build/Tone.js"
+    integrity="sha384-NWoslxaf/3dYwQk+uGziDYJFdsjBpVlU1WpFRexuDFcIk/5PJpCbpVXia2Uikeix"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/vexflow@5.0.0/build/cjs/vexflow.js"
+    integrity="sha384-CqssDDrB0gDzmUGwU/TPip4CJOQif4qWkW+w31xtNqLV34D7utsq7O4N7uBAtF9u"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script src="js/theory.js"></script>
+  <script src="js/samples.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/staff.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
